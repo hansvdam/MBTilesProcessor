@@ -22,6 +22,10 @@ import javax.swing.SwingUtilities;
 
 public class TilesMergerMain extends JPanel {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	private JTextField[] fields;
 
 	// Create a form with the specified labels, tooltips, and sizes.
@@ -106,6 +110,11 @@ public class TilesMergerMain extends JPanel {
 
 
 	static class MainPanel extends JPanel implements ICancelRequestedProvider {
+
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 1L;
 
 		/**
 		 * 

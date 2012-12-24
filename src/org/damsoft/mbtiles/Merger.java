@@ -9,6 +9,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.URL;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -16,7 +17,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -24,9 +24,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.JProgressBar;
 import javax.swing.SwingUtilities;
 
 import org.apache.commons.io.FileUtils;
@@ -37,9 +34,6 @@ import org.apache.commons.io.FileUtils;
  *         mbtilesspec can be found at https://github.com/mapbox/mbtiles-spec
  */
 public class Merger {
-
-	private JFrame frame;
-	private List<String> dirs;
 
 	/**
 	 * @param dirs
@@ -57,6 +51,7 @@ public class Merger {
 			ProgressPanel progressPanel2,
 			final ICancelRequestedProvider cancelProvider) {
 		initJdbcDriver();
+		System.out.println("hoi");
 		Set<String> filenamesS1 = createFileNamesSet(dirs.get(0));
 		Set<String> filenamesS2 = createFileNamesSet(dirs.get(1));
 		Set<String> missingFiles = new HashSet<String>(filenamesS1);
@@ -96,7 +91,6 @@ public class Merger {
 
 				String targetBounds = combineBounds(bounds);
 				String targetName = combineNames(names);
-				File targetDbFile = new File(targetPath);
 				ConnectionAndStatement connectionAndStatement = initTargetDb(
 						targetPath, targetBounds, targetName);
 				Statement targetStat = connectionAndStatement.stat;
@@ -218,12 +212,6 @@ public class Merger {
 				e.printStackTrace();
 			}
 		}
-	}
-
-	private String getDbFileName(Statement statement) throws SQLException {
-		String[] portions = statement.getConnection().getMetaData().getURL()
-				.split("\\\\");
-		return portions[portions.length - 1];
 	}
 
 	/**
@@ -384,11 +372,13 @@ public class Merger {
 		return fileNamesSet;
 	}
 
-	private static String[] readSqlStatements(String fileName) {
-		FileInputStream fr;
+	private String[] readSqlStatements(String fileName) {
+		InputStream fr;
 		String[] inst = null;
 		try {
-			fr = new FileInputStream(fileName);
+			URL url = getClass().getResource(fileName);
+			fr = url.openStream();
+//			fr = new FileInputStream("resources/" + fileName);
 			inst = readSqlFromStream(fr);
 		} catch (final IOException e) {
 		}
@@ -412,7 +402,7 @@ public class Merger {
 		return inst;
 	}
 
-	private static ConnectionAndStatement initTargetDb(String targetDbPath,
+	private ConnectionAndStatement initTargetDb(String targetDbPath,
 			String targetBounds, String targetName) {
 		Statement stat = null;
 		ConnectionAndStatement connectionAndStatement = null;
@@ -458,7 +448,6 @@ public class Merger {
 
 		@Override
 		public void run() {
-			double value = perResult * counter;
 			progressPanel2.getProgressBar().setValue(
 					(int) (perResult * counter * 100));
 		}
@@ -490,7 +479,7 @@ public class Merger {
 		return new ConnectionAndStatement(conn, stat);
 	}
 
-	private static void executeStatementsInFile(Statement stat,
+	private void executeStatementsInFile(Statement stat,
 			String fileName, String[] strings) throws SQLException {
 		String[] inst = readSqlStatements(fileName);
 
@@ -510,7 +499,7 @@ public class Merger {
 	private static String replacePlaceHolder(String string, String[] strings) {
 		int counter = 1;
 		for (String string2 : strings) {
-			string = string.replace("$" + counter, strings[counter - 1]);
+			string = string.replace("$" + counter, string2);
 			counter++;
 		}
 		return string;

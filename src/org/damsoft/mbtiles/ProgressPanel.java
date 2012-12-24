@@ -8,8 +8,6 @@ import java.awt.BorderLayout;
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
-import javax.swing.JTextArea;
-import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 
 /**
@@ -18,8 +16,11 @@ import javax.swing.border.TitledBorder;
  */
 public class ProgressPanel extends JPanel {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	private JProgressBar progressBar;
-	private JTextArea textArea;
 	private TitledBorder border;
 
 	/**

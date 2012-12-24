@@ -12,7 +12,12 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 
 public class FileChooserTest extends JFrame {
-  private JTextField filename = new JTextField(), dir = new JTextField();
+  /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+private JTextField filename = new JTextField(), dir = new JTextField();
 
   private JButton open = new JButton("Open"), save = new JButton("Save");
 
