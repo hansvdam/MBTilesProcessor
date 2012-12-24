@@ -16,9 +16,11 @@ import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 
-public class TilesMergerMain extends JPanel implements CancelRequestedProvider {
+public class TilesMergerMain extends JPanel {
 
 	private JTextField[] fields;
 
@@ -102,84 +104,119 @@ public class TilesMergerMain extends JPanel implements CancelRequestedProvider {
 		return (fields[i].getText());
 	}
 
-	boolean cancelrequested = false;
+
+	static class MainPanel extends JPanel implements ICancelRequestedProvider {
+
+		/**
+		 * 
+		 */
+		public MainPanel() {
+			super();
+			setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+			String[] labels = { "Source 1", "Source 2", "Target" };
+			char[] mnemonics = { 'S', 'O', 'T' };
+			int[] widths = { 15, 15, 15 };
+			String[] descs = { "The first source directory with mbtiles",
+					"The second source directory with mbtiles",
+					"The directory that will contian the merged archives" };
+
+
+			JTextArea textArea = new JTextArea("In the following form select three directories: two source directories containing equally named mbtile-archives: probably about the same are, but containing different zoom levels. The 'target' directory is where the merges end up. This way if you have a number of archives, but some zoomlevels are missing, you only need to create archives with the same names containing the missing zoomlevels, and they can be merged with the original archives.");
+			textArea.setLineWrap(true);
+			textArea.setEditable(false);
+			add(textArea);
+			final TilesMergerMain form = new TilesMergerMain(labels, mnemonics,
+					widths, descs);
+			add(form);
+			JButton merge = new JButton("Merge");
+			cancelButton = new JButton("Cancel");
+			cancelButton.setEnabled(false);
+			cancelButton.addActionListener(new ActionListener() {
+
+				@Override
+				public void actionPerformed(ActionEvent arg0) {
+					setCancelrequested(true);
+				}
+			});
+			progressPanel1 = new ProgressPanel();
+			add(progressPanel1);
+			progressPanel2 = new ProgressPanel();
+			add(progressPanel2);
+			JPanel p = new JPanel();
+			p.add(merge);
+			p.add(cancelButton);
+			p.setBackground(Color.red);
+			add(p);
+			merge.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent e) {
+					Thread thread = new Thread(new Runnable() {
+						
+						@Override
+						public void run() {
+							cancelButton.setEnabled(true);
+							new Merger().merge(form.getDirs(), progressPanel1,
+									progressPanel2, MainPanel.this);
+						}
+					});
+					thread.start();
+				}
+			});
+			
+		}
+		boolean cancelrequested = false;
+		private JButton cancelButton;
+		private ProgressPanel progressPanel1;
+		private ProgressPanel progressPanel2;
+		
+		/* (non-Javadoc)
+		 * @see org.damsoft.mbtiles.CancelRequestedProvider#isCancelrequested()
+		 */
+		@Override
+		public boolean isCancelrequested() {
+			return cancelrequested;
+		}
+		
+		/* (non-Javadoc)
+		 * @see org.damsoft.mbtiles.CancelRequestedProvider#setCancelrequested(boolean)
+		 */
+		@Override
+		public void setCancelrequested(boolean cancelrequested) {
+			this.cancelrequested = cancelrequested;
+		}
+
+		/* (non-Javadoc)
+		 * @see org.damsoft.mbtiles.ICancelRequestedProvider#cancelRequestedExecuted()
+		 */
+		@Override
+		public void cancelRequestExecuted() {
+			cancelButton.setEnabled(false);
+			progressPanel1.setText("Nothing is happening");
+			progressPanel1.getProgressBar().setValue(0);
+			progressPanel2.setText("Nothing is happening");
+			progressPanel2.getProgressBar().setValue(0);
+			cancelrequested = false;
+		}
+		
+	}
 	
-	/* (non-Javadoc)
-	 * @see org.damsoft.mbtiles.CancelRequestedProvider#isCancelrequested()
-	 */
-	@Override
-	public boolean isCancelrequested() {
-		return cancelrequested;
-	}
-
-	/* (non-Javadoc)
-	 * @see org.damsoft.mbtiles.CancelRequestedProvider#setCancelrequested(boolean)
-	 */
-	@Override
-	public void setCancelrequested(boolean cancelrequested) {
-		this.cancelrequested = cancelrequested;
-	}
-
 	public static void main(String[] args) {
-		String[] labels = { "Source 1", "Source 2", "Target" };
-		char[] mnemonics = { 'S', 'O', 'T' };
-		int[] widths = { 15, 15, 15 };
-		String[] descs = { "The first source directory with mbtiles",
-				"The second source directory with mbtiles",
-				"The directory that will contian the merged archives" };
 
-		final TilesMergerMain form = new TilesMergerMain(labels, mnemonics,
-				widths, descs);
+		JPanel mainPanel = new MainPanel();
 
 		final JFrame f = new JFrame("MBTiles merger");
 		f.setLayout(new BorderLayout());
-		JButton merge = new JButton("Merge");
-		JButton cancel = new JButton("Cancel");
-		cancel.setEnabled(false);
-		cancel.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent arg0) {
-				form.setCancelrequested(true);
-			}
-		});
-
-		JPanel mainPanel = new JPanel();
-		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
-		mainPanel.add(form);
-		f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		f.getContentPane().add(mainPanel);
-		final ProgressPanel progressPanel1 = new ProgressPanel();
-		mainPanel.add(progressPanel1);
-		final ProgressPanel progressPanel2 = new ProgressPanel();
-		mainPanel.add(progressPanel2);
-		JPanel p = new JPanel();
-		p.add(merge);
-		p.add(cancel);
-		p.setBackground(Color.red);
-		mainPanel.add(p);
-		merge.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				Thread thread = new Thread(new Runnable() {
-
-					@Override
-					public void run() {
-						new Merger().merge(form.getDirs(), progressPanel1,
-								progressPanel2, form);
-					}
-				});
-				thread.start();
+		f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		f.pack();
+		f.setVisible(true);
+		// don't knwo why, but layout needs the following, because at the first attempt to packk apparently not everything
+		// can be considered properly....:
+		SwingUtilities.invokeLater(new Runnable() {
+			
+			@Override
+			public void run() {
+				f.pack();
 			}
 		});
-
-		f.pack();
-		// int paneWidth = f.getContentPane().getWidth();
-		f.setVisible(true);
-		// f.getContentPane().add(form, BorderLayout.NORTH);
-		// JPanel p = new JPanel();
-		// p.add(submit);
-		// f.getContentPane().add(p, BorderLayout.SOUTH);
-		// f.pack();
-		// f.setVisible(true);
 	}
 }

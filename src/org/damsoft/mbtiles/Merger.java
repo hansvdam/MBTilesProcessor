@@ -50,11 +50,12 @@ public class Merger {
 
 	/**
 	 * @param progressPanel2
-	 * @param form 
+	 * @param form
 	 * 
 	 */
 	public void merge(List<String> dirs, ProgressPanel progressPanel1,
-			ProgressPanel progressPanel2, CancelRequestedProvider cancelProvider) {
+			ProgressPanel progressPanel2,
+			final ICancelRequestedProvider cancelProvider) {
 		initJdbcDriver();
 		Set<String> filenamesS1 = createFileNamesSet(dirs.get(0));
 		Set<String> filenamesS2 = createFileNamesSet(dirs.get(1));
@@ -71,8 +72,8 @@ public class Merger {
 		int counter = 0;
 		for (String fileName : crossSection) {
 			try {
-				SwingUtilities.invokeLater(new ProgressUpdater(
-						progressPanel1, counter, perFileProgress));
+				SwingUtilities.invokeLater(new ProgressUpdater(progressPanel1,
+						counter, perFileProgress));
 
 				progressPanel1.setText("total progress");
 				progressPanel2.setText("merging " + fileName);
@@ -112,7 +113,14 @@ public class Merger {
 				e.printStackTrace();
 			}
 			counter++;
-			if(cancelProvider.isCancelrequested()){
+			if (cancelProvider.isCancelrequested()) {
+				SwingUtilities.invokeLater(new Runnable() {
+
+					@Override
+					public void run() {
+						cancelProvider.cancelRequestExecuted();
+					}
+				});
 				break;
 			}
 		}
