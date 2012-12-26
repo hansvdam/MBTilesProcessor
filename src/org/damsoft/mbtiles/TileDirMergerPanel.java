@@ -8,6 +8,7 @@ import java.util.List;
 
 import javax.swing.JFileChooser;
 import javax.swing.JTextField;
+import javax.swing.text.JTextComponent;
 
 /**
  * @author Hans van Dam
@@ -20,10 +21,11 @@ public class TileDirMergerPanel extends FileSystemChooserPanel {
 	 * @param mnemonics
 	 * @param widths
 	 * @param tips
+	 * @param scrollTextArea 
 	 */
 	public TileDirMergerPanel(String[] labels, char[] mnemonics, int[] widths,
-			String[] tips) {
-		super(labels, mnemonics, widths, tips);
+			String[] tips, boolean[] scrollTextArea) {
+		super(labels, mnemonics, widths, tips, scrollTextArea);
 		// TODO Auto-generated constructor stub
 	}
 
@@ -34,7 +36,7 @@ public class TileDirMergerPanel extends FileSystemChooserPanel {
 
 	public List<String> getDirs() {
 		List<String> returnValue = new ArrayList<String>();
-		for (JTextField textField : fields) {
+		for (JTextComponent textField : fields) {
 			returnValue.add(textField.getText());
 		}
 		return returnValue;

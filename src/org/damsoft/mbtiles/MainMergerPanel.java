@@ -69,6 +69,10 @@ public abstract class MainMergerPanel extends JPanel implements ICancelRequested
 					@Override
 					public void run() {
 						cancelButton.setEnabled(true);
+						mergeCommand();
+					}
+
+					private void mergeCommand() {
 						new Merger().mergeDirs(getSources(), progressPanel1,
 								progressPanel2, MainMergerPanel.this);
 					}
@@ -128,8 +132,12 @@ public abstract class MainMergerPanel extends JPanel implements ICancelRequested
 		textArea.setLineWrap(true);
 		textArea.setEditable(false);
 		add(textArea);
-		Component horizontalStrut = Box.createRigidArea(new Dimension(200, 200));
-		add(horizontalStrut);
+//		Component horizontalStrut = Box.createRigidArea(new Dimension(200, 200));
+//		add(horizontalStrut);
+	}
+
+	public FileSystemChooserPanel getForm() {
+		return form;
 	}
 
 }

@@ -4,6 +4,7 @@
 package org.damsoft.mbtiles;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 
 import javax.swing.BoxLayout;
 import javax.swing.JFrame;
@@ -25,8 +26,10 @@ public class MainClass {
 		JPanel surroundingPanel = new JPanel();
 		surroundingPanel.setLayout(new BoxLayout(surroundingPanel, BoxLayout.X_AXIS));
 
-		JPanel dirMergerPanel = new MainDirMergerPanel();
+		MainDirMergerPanel dirMergerPanel = new MainDirMergerPanel();
 		surroundingPanel.add(dirMergerPanel);
+		Dimension prefSize = dirMergerPanel.getForm().getPreferredSize();
+		dirMergerPanel.getForm().setMaximumSize(prefSize);
 
 		surroundingPanel.add(new JSeparator(SwingConstants.VERTICAL));
 		surroundingPanel.add(new JSeparator(SwingConstants.VERTICAL));
@@ -35,6 +38,7 @@ public class MainClass {
 
 		MainMergerPanel archiveMergerPanel = new MainWithinDirMergerPanel();
 		surroundingPanel.add(archiveMergerPanel);
+		archiveMergerPanel.getForm().setMaximumSize(prefSize);
 
 		f.setLayout(new BorderLayout());
 		f.getContentPane().add(surroundingPanel);

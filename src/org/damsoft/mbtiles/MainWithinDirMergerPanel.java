@@ -13,16 +13,17 @@ class MainWithinDirMergerPanel extends MainMergerPanel {
 	public MainWithinDirMergerPanel() {
 		super();
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-		String[] labels = { "Source", "Target" };
+		String[] labels = { "Sources", "Target" };
 		char[] mnemonics = { 'S', 'T' };
 		int[] widths = { 15, 15, 15 };
 		String[] descs = { "The directory with mbtiles",
 				"The file that will contain all merged archives" };
+		boolean[] scrollTextArea = {true,false};
 
 
-		addExplanation("bla bla");
+		addExplanation("This left panel does not work yet (doesn't look good either)");
 		form = new ArchiveMergerPanel(labels, mnemonics,
-				widths, descs);
+				widths, descs, scrollTextArea);
 		add(form);
 		buildRestGui();
 

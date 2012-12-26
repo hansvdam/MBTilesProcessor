@@ -11,7 +11,7 @@ import javax.swing.JFileChooser;
 
 /**
  * @author Hans van Dam
- *
+ * 
  */
 public class ArchiveMergerPanel extends FileSystemChooserPanel {
 
@@ -22,8 +22,8 @@ public class ArchiveMergerPanel extends FileSystemChooserPanel {
 	 * @param tips
 	 */
 	public ArchiveMergerPanel(String[] labels, char[] mnemonics, int[] widths,
-			String[] tips) {
-		super(labels, mnemonics, widths, tips);
+			String[] tips, boolean[] scollTextAreas) {
+		super(labels, mnemonics, widths, tips, scollTextAreas);
 		// TODO Auto-generated constructor stub
 	}
 
@@ -32,7 +32,9 @@ public class ArchiveMergerPanel extends FileSystemChooserPanel {
 		fileChooser.setMultiSelectionEnabled(true);
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.damsoft.mbtiles.FileSystemChooserPanel#getDirs()
 	 */
 	@Override
