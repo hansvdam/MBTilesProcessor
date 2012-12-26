@@ -5,7 +5,6 @@ package org.damsoft.mbtiles;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -47,7 +46,7 @@ public class Merger {
 	 * @param form
 	 * 
 	 */
-	public void merge(List<String> dirs, ProgressPanel progressPanel1,
+	public void mergeDirs(List<String> dirs, ProgressPanel progressPanel1,
 			ProgressPanel progressPanel2,
 			final ICancelRequestedProvider cancelProvider) {
 		initJdbcDriver();
