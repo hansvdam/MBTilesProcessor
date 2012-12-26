@@ -16,6 +16,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JSeparator;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
@@ -214,7 +215,11 @@ public class TilesMergerMain extends JPanel {
 
 		final JFrame f = new JFrame("MBTiles merger");
 		f.setLayout(new BorderLayout());
-		f.getContentPane().add(mainPanel);
+		JPanel surroundingPanel = new JPanel();
+		surroundingPanel.setLayout(new BoxLayout(surroundingPanel, BoxLayout.Y_AXIS));
+		surroundingPanel.add(mainPanel);
+		surroundingPanel.add(new JSeparator());
+		f.getContentPane().add(surroundingPanel);
 		f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		f.pack();
 		f.setVisible(true);
