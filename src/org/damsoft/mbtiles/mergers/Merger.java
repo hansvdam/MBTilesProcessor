@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.damsoft.mbtiles;
+package org.damsoft.mbtiles.mergers;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -26,13 +26,15 @@ import java.util.Set;
 import javax.swing.SwingUtilities;
 
 import org.apache.commons.io.FileUtils;
+import org.damsoft.mbtiles.ICancelRequestedProvider;
+import org.damsoft.mbtiles.ProgressPanel;
 
 /**
  * @author Hans van Dam
  * 
  *         mbtilesspec can be found at https://github.com/mapbox/mbtiles-spec
  */
-public class Merger {
+public abstract class Merger {
 
 	/**
 	 * @param dirs
@@ -41,110 +43,22 @@ public class Merger {
 	public Merger() {
 	}
 
-	/**
-	 * @param progressPanel2
-	 * @param form
-	 * 
-	 */
-	public void mergeDirs(List<String> dirs, ProgressPanel progressPanel1,
+	public abstract void merge(List<String> dirs, ProgressPanel progressPanel1,
 			ProgressPanel progressPanel2,
-			final ICancelRequestedProvider cancelProvider) {
-		initJdbcDriver();
-		System.out.println("hoi");
-		Set<String> filenamesS1 = createFileNamesSet(dirs.get(0));
-		Set<String> filenamesS2 = createFileNamesSet(dirs.get(1));
-		Set<String> missingFiles = new HashSet<String>(filenamesS1);
-		missingFiles.removeAll(filenamesS2);
-		System.out
-				.println("The following files from dir 1 were not merged, because they don't exist in sourceDir 2");
-		for (String string : missingFiles) {
-			System.out.println(string);
-		}
-		Set<String> crossSection = new HashSet<String>(filenamesS1);
-		crossSection.retainAll(filenamesS2);
-		double perFileProgress = 1.0 / crossSection.size();
-		int counter = 0;
-		for (String fileName : crossSection) {
-			try {
-				SwingUtilities.invokeLater(new ProgressUpdater(progressPanel1,
-						counter, perFileProgress));
+			final ICancelRequestedProvider cancelProvider) ;
 
-				progressPanel1.setText("total progress");
-				progressPanel2.setText("merging " + fileName);
-				List<String> dbPaths = new ArrayList<String>();
-				dbPaths.add(dirs.get(0) + "/" + fileName);
-				dbPaths.add(dirs.get(1) + "/" + fileName);
 
-				String targetPath = dirs.get(2) + "/" + fileName;
-				String largestFilePath = copyLargestAsTarget(dbPaths,
-						targetPath);
-
-				List<String> names = new ArrayList<String>();
-				List<String> bounds = new ArrayList<String>();
-
-				Map<String, Statement> statements = fillNamesAndBounds(dbPaths,
-						names, bounds);
-
-				dbPaths.remove(largestFilePath);
-				statements.remove(largestFilePath);
-
-				String targetBounds = combineBounds(bounds);
-				String targetName = combineNames(names);
-				ConnectionAndStatement connectionAndStatement = initTargetDb(
-						targetPath, targetBounds, targetName);
-				Statement targetStat = connectionAndStatement.stat;
-
-				merginTiles(connectionAndStatement.conn, statements.values(),
-						null, progressPanel2);
-				finishTargetDb(targetStat);
-				targetStat.close();
-				for (Statement statement : statements.values()) {
-					statement.close();
-				}
-			} catch (SQLException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			counter++;
-			if (cancelProvider.isCancelrequested()) {
-				SwingUtilities.invokeLater(new Runnable() {
-
-					@Override
-					public void run() {
-						cancelProvider.cancelRequestExecuted();
-					}
-				});
-				break;
-			}
-		}
-	}
-
-	/**
-	 * @param dbPaths
-	 * @param names
-	 * @param bounds
-	 * @return
-	 */
-	private Map<String, Statement> fillNamesAndBounds(List<String> dbPaths,
-			List<String> names, List<String> bounds) {
-		Map<String, Statement> returnValue = new HashMap<String, Statement>();
-		for (String path : dbPaths) {
-			Statement sourceStat1;
-			try {
-				sourceStat1 = createDbStatement(path).stat;
-				ResultSet metadata1 = sourceStat1
-						.executeQuery("Select * from metadata");
-				String bounds1 = getBounds(metadata1);
-				String name1 = getName(metadata1);
-				bounds.add(bounds1);
-				names.add(name1);
-				returnValue.put(path, sourceStat1);
-			} catch (SQLException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-		return returnValue;
+	protected Statement createDbStatement(List<String> names,
+			List<String> bounds, String path) throws SQLException {
+		Statement sourceStat1;
+		sourceStat1 = createDbStatement(path).stat;
+		ResultSet metadata1 = sourceStat1
+				.executeQuery("Select * from metadata");
+		String bounds1 = getBounds(metadata1);
+		String name1 = getName(metadata1);
+		bounds.add(bounds1);
+		names.add(name1);
+		return sourceStat1;
 	}
 
 	/**
@@ -152,7 +66,7 @@ public class Merger {
 	 * @param string
 	 * @return
 	 */
-	private String copyLargestAsTarget(List<String> dbPaths, String targetPath) {
+	protected String copyLargestAsTarget(List<String> dbPaths, String targetPath) {
 		long largestSize = 0;
 		File largestFile = null;
 		String largestFilePath = null;
@@ -179,37 +93,42 @@ public class Merger {
 	 * @param collection
 	 * @param progressPanel2
 	 */
-	private void merginTiles(Connection conn, Collection<Statement> collection,
+	protected void merginTiles(Connection conn, Collection<Statement> collection,
 			ProgressPanel progressPanel1, final ProgressPanel progressPanel2) {
 		for (Statement statement : collection) {
-			try {
-				ResultSet countSet = statement
-						.executeQuery("Select Count(*) from tiles");
-				countSet.next();
-				int numberOfRecords = countSet.getInt(1);
-				ResultSet resultset = statement
-						.executeQuery("Select * from tiles");
-				String sql = "insert into tiles values (?,?,?,?)";
-				PreparedStatement prep = conn.prepareStatement(sql);
-				final double perResult = 1.0 / numberOfRecords;
-				// setProgressMessage("merging ")
-				int counter = 0;
-				while (resultset.next()) {
-					// prep.setBinaryStream(3, fis, fileLenght);
-					SwingUtilities.invokeLater(new ProgressUpdater(
-							progressPanel2, counter, perResult));
-					prep.setInt(1, resultset.getInt("zoom_level"));
-					prep.setInt(2, resultset.getInt("tile_column"));
-					prep.setInt(3, resultset.getInt("tile_row"));
-					byte[] bytes = resultset.getBytes("tile_data");
-					prep.setBytes(4, bytes);
-					prep.execute();
-					counter++;
-				}
-			} catch (SQLException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+			mergeInTile(conn, progressPanel2, statement);
+		}
+	}
+
+	protected void mergeInTile(Connection conn,
+			final ProgressPanel progressPanel2, Statement statement) {
+		try {
+			ResultSet countSet = statement
+					.executeQuery("Select Count(*) from tiles");
+			countSet.next();
+			int numberOfRecords = countSet.getInt(1);
+			ResultSet resultset = statement
+					.executeQuery("Select * from tiles");
+			String sql = "insert into tiles values (?,?,?,?)";
+			PreparedStatement prep = conn.prepareStatement(sql);
+			final double perResult = 1.0 / numberOfRecords;
+			// setProgressMessage("merging ")
+			int counter = 0;
+			while (resultset.next()) {
+				// prep.setBinaryStream(3, fis, fileLenght);
+				SwingUtilities.invokeLater(new ProgressUpdater(
+						progressPanel2, counter, perResult));
+				prep.setInt(1, resultset.getInt("zoom_level"));
+				prep.setInt(2, resultset.getInt("tile_column"));
+				prep.setInt(3, resultset.getInt("tile_row"));
+				byte[] bytes = resultset.getBytes("tile_data");
+				prep.setBytes(4, bytes);
+				prep.execute();
+				counter++;
 			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 
@@ -251,7 +170,7 @@ public class Merger {
 	 * @param bounds2
 	 * @return
 	 */
-	private String combineBounds(List<String> bounds) {
+	protected String combineBounds(List<String> bounds) {
 		String resultBounds = "";
 		double[][] boundsMatrix = new double[4][bounds.size()];
 		int outerCounter = 0;
@@ -284,7 +203,7 @@ public class Merger {
 	 * @param bounds2
 	 * @return
 	 */
-	private String combineNames(List<String> names) {
+	protected String combineNames(List<String> names) {
 		String result = "";
 		int counter = 0;
 		for (String string : names) {
@@ -349,7 +268,7 @@ public class Merger {
 	/**
 	 * @param targetStat
 	 */
-	private void finishTargetDb(Statement targetStat) {
+	protected void finishTargetDb(Statement targetStat) {
 		// TODO Auto-generated method stub
 		try {
 			executeStatementsInFile(targetStat, "mbtilescreatorfinisher.sql",
@@ -361,7 +280,7 @@ public class Merger {
 		}
 	}
 
-	private Set<String> createFileNamesSet(String sourceDirPath) {
+	protected Set<String> createFileNamesSet(String sourceDirPath) {
 		File sourceDir1 = new File(sourceDirPath);
 		String[] filesNames = sourceDir1.list();
 		Set<String> fileNamesSet = new HashSet<String>();
@@ -401,7 +320,7 @@ public class Merger {
 		return inst;
 	}
 
-	private ConnectionAndStatement initTargetDb(String targetDbPath,
+	protected ConnectionAndStatement initTargetDb(String targetDbPath,
 			String targetBounds, String targetName) {
 		Statement stat = null;
 		ConnectionAndStatement connectionAndStatement = null;
@@ -419,11 +338,11 @@ public class Merger {
 	 * @author Hans van Dam
 	 * 
 	 */
-	private final class ProgressUpdater implements Runnable {
+	final class ProgressUpdater implements Runnable {
 		/**
 		 * 
 		 */
-		private final ProgressPanel progressPanel2;
+		private final ProgressPanel progressPanel;
 		/**
 		 * 
 		 */
@@ -438,16 +357,19 @@ public class Merger {
 		 * @param counter
 		 * @param perResult
 		 */
-		private ProgressUpdater(ProgressPanel progressPanel2, int counter,
+		ProgressUpdater(ProgressPanel progressPanel2, int counter,
 				double perResult) {
-			this.progressPanel2 = progressPanel2;
+			this.progressPanel = progressPanel2;
+			if(progressPanel==null){
+				System.out.println("this shouldnt be");
+			}
 			this.counter = counter;
 			this.perResult = perResult;
 		}
 
 		@Override
 		public void run() {
-			progressPanel2.getProgressBar().setValue(
+			progressPanel.getProgressBar().setValue(
 					(int) (perResult * counter * 100));
 		}
 	}
@@ -507,7 +429,7 @@ public class Merger {
 	/**
 	 * necessary to initialize the Jdbc driver in the Jvm
 	 */
-	private static void initJdbcDriver() {
+	protected static void initJdbcDriver() {
 		try {
 			Class.forName("org.sqlite.JDBC");
 		} catch (final ClassNotFoundException e) {

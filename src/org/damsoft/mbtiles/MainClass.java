@@ -26,25 +26,25 @@ public class MainClass {
 		JPanel surroundingPanel = new JPanel();
 		surroundingPanel.setLayout(new BoxLayout(surroundingPanel, BoxLayout.X_AXIS));
 
-		MainDirMergerPanel dirMergerPanel = new MainDirMergerPanel();
-		surroundingPanel.add(dirMergerPanel);
-		Dimension prefSize = dirMergerPanel.getForm().getPreferredSize();
-		dirMergerPanel.getForm().setMaximumSize(prefSize);
-
-		surroundingPanel.add(new JSeparator(SwingConstants.VERTICAL));
-		surroundingPanel.add(new JSeparator(SwingConstants.VERTICAL));
-		surroundingPanel.add(new JSeparator(SwingConstants.VERTICAL));
-		surroundingPanel.add(new JSeparator(SwingConstants.VERTICAL));
-
-		MainMergerPanel archiveMergerPanel = new MainWithinDirMergerPanel();
+		final MainMergerPanel archiveMergerPanel = new MainFileMergerPanel();
 		surroundingPanel.add(archiveMergerPanel);
-		archiveMergerPanel.getForm().setMaximumSize(prefSize);
+
+		surroundingPanel.add(new JSeparator(SwingConstants.VERTICAL));
+		surroundingPanel.add(new JSeparator(SwingConstants.VERTICAL));
+		surroundingPanel.add(new JSeparator(SwingConstants.VERTICAL));
+		surroundingPanel.add(new JSeparator(SwingConstants.VERTICAL));
+
+		final MainDirMergerPanel dirMergerPanel = new MainDirMergerPanel();
+		surroundingPanel.add(dirMergerPanel);
 
 		f.setLayout(new BorderLayout());
 		f.getContentPane().add(surroundingPanel);
 		f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		f.pack();
+		dirMergerPanel.fixProgressBars();
+		archiveMergerPanel.fixProgressBars();
 		f.setVisible(true);
+
 		// don't knwo why, but layout needs the following, because at the first attempt to packk apparently not everything
 		// can be considered properly....:
 		SwingUtilities.invokeLater(new Runnable() {

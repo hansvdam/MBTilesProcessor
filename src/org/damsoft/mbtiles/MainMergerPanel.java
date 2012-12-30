@@ -4,17 +4,20 @@
 package org.damsoft.mbtiles;
 
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.LayoutManager;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
 
-import javax.swing.Box;
 import javax.swing.JButton;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JProgressBar;
 import javax.swing.JTextArea;
+import javax.swing.SwingUtilities;
+
+import org.damsoft.mbtiles.mergers.Merger;
 
 /**
  * @author Hans van Dam
@@ -33,13 +36,15 @@ public abstract class MainMergerPanel extends JPanel implements ICancelRequested
 	protected ProgressPanel progressPanel1;
 	protected ProgressPanel progressPanel2;
 
+	private Merger merger;
+
 	/**
 	 * @param string 
 	 * 
 	 */
-	public MainMergerPanel() {
+	public MainMergerPanel(Merger merger) {
 		super();
-
+		this.merger = merger;  
 	}
 
 	protected void buildRestGui() {
@@ -55,6 +60,10 @@ public abstract class MainMergerPanel extends JPanel implements ICancelRequested
 		});
 		progressPanel1 = new ProgressPanel();
 		add(progressPanel1);
+//		JProgressBar progB = progressPanel1.getProgressBar();
+//		Dimension preferredSize = progB.getPreferredSize();
+//		preferredSize.width = 2000;
+//		progB.setPreferredSize(preferredSize);
 		progressPanel2 = new ProgressPanel();
 		add(progressPanel2);
 		JPanel p = new JPanel();
@@ -62,6 +71,7 @@ public abstract class MainMergerPanel extends JPanel implements ICancelRequested
 		p.add(cancelButton);
 		p.setBackground(Color.red);
 		add(p);
+
 		merge.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				Thread thread = new Thread(new Runnable() {
@@ -73,14 +83,28 @@ public abstract class MainMergerPanel extends JPanel implements ICancelRequested
 					}
 
 					private void mergeCommand() {
-						new Merger().mergeDirs(getSources(), progressPanel1,
+						merger.merge(getSources(), progressPanel1,
 								progressPanel2, MainMergerPanel.this);
+						progressPanel1.getProgressBar().setValue(100);
+						progressPanel2.getProgressBar().setValue(100);
+						progressPanel2.setText("Finished");
 					}
 
 				});
 				thread.start();
 			}
 		});
+	}
+
+	/**
+	 * @param string
+	 */
+	protected void addMainTitle(String string) {
+		JLabel label = new JLabel(string.toUpperCase());
+		label.setBackground(Color.red);
+		label.setAlignmentX(CENTER_ALIGNMENT);
+		add(label);
+
 	}
 
 	public abstract List<String> getSources();
@@ -140,4 +164,16 @@ public abstract class MainMergerPanel extends JPanel implements ICancelRequested
 		return form;
 	}
 
+	public void fixProgressBars(){
+		fixProgressBar(progressPanel1);
+		fixProgressBar(progressPanel2);
+	}
+
+	private void fixProgressBar(ProgressPanel progressPanel) {
+		Dimension size = progressPanel.getSize();
+		JProgressBar progBar = progressPanel.getProgressBar();
+		Dimension preferredSize = progBar.getPreferredSize();
+		preferredSize.width = size.width;
+		progBar.setPreferredSize(preferredSize);
+	}
 }

@@ -32,7 +32,7 @@ public class ProgressPanel extends JPanel {
 	    progressBar.setStringPainted(true);
 	    border = BorderFactory.createTitledBorder("No Progress Yet");
 	    progressBar.setBorder(border);
-	    add(progressBar, BorderLayout.NORTH);
+	    add(progressBar);//, BorderLayout.CENTER);
 //	    textArea = new JTextArea();
 //	    add(textArea, BorderLayout.SOUTH);
 	}
